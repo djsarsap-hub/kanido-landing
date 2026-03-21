@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kani Do — Navigate your day, one island at a time</title>
+  <meta name="description" content="The guilt-free task tracker for overwhelming days, big ideas, and brains that won't slow down."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal-dark: #006064;
+      --teal-mid: #00897B;
+      --teal-light: #4DB6AC;
+      --aqua: #B2EBF2;
+      --coral: #FF8A71;
+      --coral-dark: #FF5252;
+      --gold: #FFB300;
+      --navy: #002D2F;
+      --muted: #4a8c8e;
+      --white: #ffffff;
+      --card: #ffffff;
+      --bg-soft: #E0F7FA;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--teal-dark);
+      color: var(--navy);
+      overflow-x: hidden;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes bobSlow { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes wave { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    @keyframes float1 { 0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-18px) rotate(3deg)} }
+    @keyframes float2 { 0%,100%{transform:translateY(0) rotate(2deg)} 50%{transform:translateY(-12px) rotate(-2deg)} }
+    @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+
+    .fade-up { animation: fadeUp 0.7s ease both; }
+    .fade-up-1 { animation: fadeUp 0.7s 0.1s ease both; }
+    .fade-up-2 { animation: fadeUp 0.7s 0.2s ease both; }
+    .fade-up-3 { animation: fadeUp 0.7s 0.3s ease both; }
+    .fade-up-4 { animation: fadeUp 0.7s 0.4s ease both; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 16px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(0,96,100,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(178,235,242,0.15);
+    }
+    .nav-logo {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 24px; font-weight: 700; color: #fff;
+    }
+    .nav-logo span { color: var(--coral); }
+    .nav-cta {
+      background: var(--coral);
+      color: #fff; border: none; border-radius: 50px;
+      padding: 10px 22px; font-size: 14px; font-weight: 800;
+      cursor: pointer; font-family: 'Nunito', sans-serif;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(255,138,113,0.45);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,138,113,0.55); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(175deg, #4DB6AC 0%, #006064 60%, #003F40 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 120px 24px 80px;
+      position: relative; overflow: hidden;
+      text-align: center;
+    }
+
+    .hero-bubbles {
+      position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+    }
+    .bubble {
+      position: absolute; border-radius: 50%;
+      background: rgba(178,235,242,0.08);
+      animation: bobSlow linear infinite;
+    }
+
+    .hero-crab {
+      font-size: 80px; margin-bottom: 16px;
+      animation: bob 2s infinite ease-in-out;
+      filter: drop-shadow(0 8px 24px rgba(0,0,0,0.2));
+    }
+
+    .hero-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(40px, 8vw, 72px);
+      font-weight: 700; color: #fff;
+      line-height: 1.1; margin-bottom: 8px;
+    }
+    .hero-title span { color: var(--coral); }
+
+    .hero-tagline {
+      font-size: clamp(16px, 3vw, 22px);
+      color: rgba(255,255,255,0.85);
+      font-weight: 600; margin-bottom: 16px;
+      max-width: 560px;
+    }
+
+    .hero-sub {
+      font-size: clamp(13px, 2vw, 16px);
+      color: rgba(255,255,255,0.65);
+      max-width: 500px; line-height: 1.7;
+      margin-bottom: 36px;
+    }
+
+    .hero-tags {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      justify-content: center; margin-bottom: 40px;
+    }
+    .hero-tag {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50px; padding: 6px 16px;
+      font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.85);
+    }
+
+    /* ── WAITLIST FORM ── */
+    .waitlist-form {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      justify-content: center; max-width: 440px; width: 100%;
+    }
+    .waitlist-input {
+      flex: 1; min-width: 220px;
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 50px; padding: 14px 20px;
+      color: #fff; font-size: 15px; outline: none;
+      font-family: 'Nunito', sans-serif;
+      backdrop-filter: blur(8px);
+    }
+    .waitlist-input::placeholder { color: rgba(255,255,255,0.55); }
+    .waitlist-input:focus { border-color: var(--coral); background: rgba(255,255,255,0.2); }
+    .waitlist-btn {
+      background: linear-gradient(130deg, var(--coral), var(--coral-dark));
+      color: #fff; border: none; border-radius: 50px;
+      padding: 14px 28px; font-size: 15px; font-weight: 900;
+      cursor: pointer; font-family: 'Nunito', sans-serif;
+      box-shadow: 0 4px 20px rgba(255,138,113,0.5);
+      transition: transform 0.2s, box-shadow 0.2s;
+      white-space: nowrap;
+    }
+    .waitlist-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(255,138,113,0.6); }
+    .waitlist-success {
+      background: rgba(255,255,255,0.15);
+      border: 1.5px solid rgba(255,255,255,0.3);
+      border-radius: 16px; padding: 16px 24px;
+      color: #fff; font-size: 15px; font-weight: 700;
+      text-align: center; max-width: 440px;
+      backdrop-filter: blur(8px);
+    }
+
+    /* ── WAVE DIVIDER ── */
+    .wave-divider {
+      width: 100%; overflow: hidden;
+      line-height: 0; margin-top: -2px;
+    }
+
+    /* ── SECTIONS ── */
+    section { padding: 80px 24px; }
+
+    .section-inner {
+      max-width: 1080px; margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 11px; letter-spacing: 3px;
+      text-transform: uppercase; font-weight: 800;
+      color: var(--muted); margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(28px, 5vw, 44px);
+      font-weight: 700; color: var(--navy);
+      line-height: 1.2; margin-bottom: 16px;
+    }
+
+    .section-desc {
+      font-size: 17px; color: var(--muted);
+      line-height: 1.7; max-width: 560px;
+    }
+
+    /* ── FOR YOU ── */
+    .for-you { background: var(--bg-soft); }
+
+    .for-you-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px; margin-top: 40px;
+    }
+
+    .for-you-card {
+      background: #fff;
+      border-radius: 20px; padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,96,100,0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .for-you-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,96,100,0.14); }
+    .for-you-card .icon { font-size: 36px; margin-bottom: 12px; }
+    .for-you-card h3 { font-family: 'Fredoka', sans-serif; font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+    .for-you-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── FEATURES ── */
+    .features { background: #fff; }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px; margin-top: 48px;
+    }
+
+    .feature-card {
+      background: var(--bg-soft);
+      border-radius: 24px; padding: 28px 24px;
+      border: 1.5px solid rgba(0,96,100,0.08);
+      transition: transform 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-3px); }
+    .feature-card .feat-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin-bottom: 16px;
+    }
+    .feature-card h3 { font-family: 'Fredoka', sans-serif; font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .feature-card p { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+    /* ── JOURNEY ── */
+    .journey-section {
+      background: linear-gradient(175deg, #4DB6AC 0%, #006064 100%);
+      text-align: center; padding: 80px 24px;
+    }
+    .journey-section .section-title { color: #fff; }
+    .journey-section .section-desc { color: rgba(255,255,255,0.75); margin: 0 auto 40px; }
+
+    .stages {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      justify-content: center; max-width: 700px; margin: 0 auto;
+    }
+    .stage-pill {
+      background: rgba(255,255,255,0.12);
+      border: 1.5px solid rgba(255,255,255,0.2);
+      border-radius: 50px; padding: 10px 20px;
+      font-size: 14px; font-weight: 700; color: #fff;
+      display: flex; align-items: center; gap: 8px;
+      transition: background 0.2s;
+    }
+    .stage-pill:hover { background: rgba(255,255,255,0.2); }
+
+    /* ── PRICING ── */
+    .pricing { background: var(--bg-soft); }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px; margin-top: 48px; max-width: 900px;
+    }
+
+    .pricing-card {
+      background: #fff; border-radius: 24px; padding: 32px 28px;
+      border: 2px solid transparent;
+      box-shadow: 0 4px 20px rgba(0,96,100,0.08);
+      position: relative; transition: transform 0.2s;
+    }
+    .pricing-card:hover { transform: translateY(-4px); }
+    .pricing-card.featured {
+      border-color: var(--coral);
+      box-shadow: 0 8px 40px rgba(255,138,113,0.25);
+    }
+    .pricing-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--coral); color: #fff;
+      border-radius: 50px; padding: 4px 16px;
+      font-size: 11px; font-weight: 900; letter-spacing: 1px;
+      text-transform: uppercase; white-space: nowrap;
+    }
+    .pricing-tier { font-size: 12px; font-weight: 800; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    .pricing-price { font-family: 'Fredoka', sans-serif; font-size: 44px; font-weight: 700; color: var(--navy); line-height: 1; margin-bottom: 4px; }
+    .pricing-price span { font-size: 18px; color: var(--muted); }
+    .pricing-desc { font-size: 13px; color: var(--muted); margin-bottom: 24px; margin-top: 4px; }
+    .pricing-features { list-style: none; margin-bottom: 28px; }
+    .pricing-features li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 14px; color: var(--navy); font-weight: 600;
+      padding: 6px 0; border-bottom: 1px solid var(--bg-soft);
+    }
+    .pricing-features li span.check { color: var(--teal-mid); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .pricing-cta {
+      width: 100%; padding: 13px;
+      border-radius: 14px; border: none;
+      font-size: 14px; font-weight: 800;
+      cursor: pointer; font-family: 'Nunito', sans-serif;
+      transition: opacity 0.2s, transform 0.2s;
+      text-decoration: none; display: block; text-align: center;
+    }
+    .pricing-cta:hover { transform: translateY(-1px); opacity: 0.9; }
+    .pricing-cta.primary { background: linear-gradient(130deg, var(--coral), var(--coral-dark)); color: #fff; box-shadow: 0 4px 16px rgba(255,138,113,0.4); }
+    .pricing-cta.secondary { background: var(--bg-soft); color: var(--navy); }
+    .pricing-cta.gold { background: linear-gradient(130deg, var(--gold), #FF8F00); color: #fff; box-shadow: 0 4px 16px rgba(255,179,0,0.4); }
+
+    /* ── FOUNDER ── */
+    .founder { background: #fff; }
+    .founder-card {
+      background: linear-gradient(135deg, var(--bg-soft), #fff);
+      border-radius: 28px; padding: 40px 36px;
+      border: 1.5px solid rgba(0,96,100,0.1);
+      max-width: 680px;
+      display: flex; gap: 28px; align-items: flex-start;
+    }
+    .founder-avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal-light), var(--teal-mid));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; flex-shrink: 0;
+      animation: bobSlow 3s infinite ease-in-out;
+    }
+    .founder-name { font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+    .founder-role { font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px; }
+    .founder-bio { font-size: 15px; color: var(--muted); line-height: 1.75; }
+
+    /* ── BOTTOM CTA ── */
+    .bottom-cta {
+      background: linear-gradient(175deg, #4DB6AC 0%, #006064 100%);
+      text-align: center; padding: 80px 24px;
+    }
+    .bottom-cta .section-title { color: #fff; margin-bottom: 12px; }
+    .bottom-cta .section-desc { color: rgba(255,255,255,0.75); margin: 0 auto 36px; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--navy);
+      padding: 32px 24px; text-align: center;
+    }
+    footer .footer-logo { font-family: 'Fredoka', sans-serif; font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    footer .footer-logo span { color: var(--coral); }
+    footer p { font-size: 12px; color: rgba(255,255,255,0.4); }
+    footer a { color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 8px; font-size: 12px; }
+    footer a:hover { color: var(--coral); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .founder-card { flex-direction: column; padding: 28px 20px; }
+      .waitlist-form { flex-direction: column; }
+      .waitlist-input { min-width: unset; width: 100%; }
+      .waitlist-btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Kani <span>Do</span> 🦀</div>
+  <a href="#waitlist" class="nav-cta">Join the waitlist</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bubbles">
+    <div class="bubble" style="width:300px;height:300px;top:-80px;left:-80px;animation-duration:6s;"></div>
+    <div class="bubble" style="width:200px;height:200px;bottom:10%;right:-60px;animation-duration:8s;animation-delay:1s;"></div>
+    <div class="bubble" style="width:120px;height:120px;top:30%;left:5%;animation-duration:5s;animation-delay:2s;"></div>
+  </div>
+
+  <div class="hero-crab fade-up">
+    <svg width="90" height="90" viewBox="0 0 64 64" style="display:block;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.25))">
+      <line x1="10" y1="36" x2="2" y2="27" stroke="#c0392b" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="10" y1="41" x2="1" y2="37" stroke="#c0392b" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="54" y1="36" x2="62" y2="27" stroke="#c0392b" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="54" y1="41" x2="63" y2="37" stroke="#c0392b" stroke-width="3.5" stroke-linecap="round"/>
+      <ellipse cx="7" cy="23" rx="6.5" ry="5" fill="#e74c3c" transform="rotate(-30 7 23)"/>
+      <ellipse cx="57" cy="23" rx="6.5" ry="5" fill="#e74c3c" transform="rotate(30 57 23)"/>
+      <line x1="13" y1="32" x2="6" y2="21" stroke="#c0392b" stroke-width="4.5" stroke-linecap="round"/>
+      <line x1="51" y1="32" x2="58" y2="21" stroke="#c0392b" stroke-width="4.5" stroke-linecap="round"/>
+      <ellipse cx="32" cy="38" rx="22" ry="14" fill="#e74c3c"/>
+      <ellipse cx="32" cy="23" rx="14.5" ry="11.5" fill="#e74c3c"/>
+      <circle cx="25" cy="19" r="5.5" fill="white"/>
+      <circle cx="39" cy="19" r="5.5" fill="white"/>
+      <ellipse cx="25" cy="16" rx="5.5" ry="3" fill="#e74c3c"/>
+      <ellipse cx="39" cy="16" rx="5.5" ry="3" fill="#e74c3c"/>
+      <circle cx="26" cy="20" r="2.8" fill="#1a0800"/>
+      <circle cx="40" cy="20" r="2.8" fill="#1a0800"/>
+      <circle cx="27" cy="19" r="1.1" fill="white"/>
+      <circle cx="41" cy="19" r="1.1" fill="white"/>
+      <path d="M 24 29 Q 32 38 40 29" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <ellipse cx="21" cy="27" rx="4.5" ry="2.5" fill="#ff8a80" opacity="0.75"/>
+      <ellipse cx="43" cy="27" rx="4.5" ry="2.5" fill="#ff8a80" opacity="0.75"/>
+      <line x1="25" y1="12" x2="25" y2="18" stroke="#c0392b" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="39" y1="12" x2="39" y2="18" stroke="#c0392b" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <h1 class="hero-title fade-up-1">Kani <span>Do</span></h1>
+  <p class="hero-tagline fade-up-2">Navigate your day, one island at a time.</p>
+  <p class="hero-sub fade-up-3">The guilt-free task tracker built for overwhelming days, racing thoughts, and brains that never stop. Even one task a day is a win.</p>
+
+  <div class="hero-tags fade-up-3">
+    <span class="hero-tag">Procrastination</span>
+    <span class="hero-tag">Anxiety</span>
+    <span class="hero-tag">Perfectionism</span>
+    <span class="hero-tag">Focus</span>
+    <span class="hero-tag">Too many ideas</span>
+    <span class="hero-tag">Overwhelming days</span>
+  </div>
+
+  <div id="waitlist" class="fade-up-4">
+    <div class="waitlist-form" id="waitlistForm">
+      <input class="waitlist-input" type="email" placeholder="your@email.com" id="emailInput"/>
+      <button class="waitlist-btn" onclick="submitWaitlist()">Join the waitlist 🌊</button>
+    </div>
+    <div class="waitlist-success" id="waitlistSuccess" style="display:none;">
+      🎉 You're on the list! We'll be in touch soon. Welcome aboard, captain!
+    </div>
+    <p style="color:rgba(255,255,255,0.45);font-size:12px;margin-top:12px;font-weight:600;">No spam. Just a nudge when we're ready for you.</p>
+  </div>
+</section>
+
+<!-- WAVE -->
+<div class="wave-divider">
+  <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="display:block;width:100%;height:60px;">
+    <path d="M0,30 Q360,60 720,30 Q1080,0 1440,30 L1440,60 L0,60 Z" fill="#E0F7FA"/>
+  </svg>
+</div>
+
+<!-- FOR YOU -->
+<section class="for-you">
+  <div class="section-inner">
+    <div class="section-label">Who it's for</div>
+    <h2 class="section-title">Made for the overwhelmed, the dreamers, and the doers</h2>
+    <p class="section-desc">If your to-do list makes you more anxious than productive, Kani Do is your safe harbour.</p>
+    <div class="for-you-grid">
+      <div class="for-you-card">
+        <div class="icon">🌊</div>
+        <h3>Overwhelm</h3>
+        <p>Too much to do, don't know where to start. Kani Do helps you pick just one wave to ride.</p>
+      </div>
+      <div class="for-you-card">
+        <div class="icon">💡</div>
+        <h3>Racing thoughts</h3>
+        <p>Ideas flying everywhere? Catch them in your chest before they disappear.</p>
+      </div>
+      <div class="for-you-card">
+        <div class="icon">🎯</div>
+        <h3>Procrastination</h3>
+        <p>Start small, feel good. One task completed is one island reached.</p>
+      </div>
+      <div class="for-you-card">
+        <div class="icon">🌸</div>
+        <h3>Perfectionism</h3>
+        <p>Done is better than perfect. Kani celebrates progress, not perfection.</p>
+      </div>
+      <div class="for-you-card">
+        <div class="icon">🧠</div>
+        <h3>Focus</h3>
+        <p>ADHD-friendly design. Simple, visual, rewarding — one thing at a time.</p>
+      </div>
+      <div class="for-you-card">
+        <div class="icon">✨</div>
+        <h3>Anxiety</h3>
+        <p>No guilt, no pressure. Just gentle progress through your own ocean.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAVE -->
+<div class="wave-divider" style="background:#E0F7FA;">
+  <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="display:block;width:100%;height:60px;">
+    <path d="M0,30 Q360,0 720,30 Q1080,60 1440,30 L1440,60 L0,60 Z" fill="#ffffff"/>
+  </svg>
+</div>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="section-inner">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Everything you need, nothing you don't</h2>
+    <p class="section-desc">Kani Do strips away the noise and gives you a calm, rewarding place to get things done.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feat-icon" style="background:#E0F7FA;">🐚</div>
+        <h3>Task Chests</h3>
+        <p>Organise tasks into chests — Treasure, Work, Creative. Each one unlocks as you grow.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon" style="background:#FFF3E0;">🗺️</div>
+        <h3>Ocean Journey</h3>
+        <p>Complete tasks to unlock new ocean stages — from Tidal Pool to Treasure Island. Every win counts.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon" style="background:#FCE4EC;">🔥</div>
+        <h3>Streak Tracking</h3>
+        <p>Build momentum with daily streaks. Even one task a day keeps your flame alive.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon" style="background:#F3E5F5;">🌊</div>
+        <h3>Your Crew</h3>
+        <p>Connect with friends and send each other tasks, sparks of motivation, and encouragement.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon" style="background:#E8F5E9;">📊</div>
+        <h3>Your Journey Stats</h3>
+        <p>See your productivity patterns — best days, completion rates, weekly averages. Know yourself better.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon" style="background:#FFF8E1;">🎲</div>
+        <h3>Random Task</h3>
+        <p>Can't decide what to do? Let Kani pick a task for you. Remove the decision fatigue entirely.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OCEAN JOURNEY -->
+<section class="journey-section">
+  <div class="section-inner" style="text-align:center;">
+    <div class="section-label" style="color:rgba(255,255,255,0.5);">The adventure</div>
+    <h2 class="section-title">Every task is a wave you've ridden</h2>
+    <p class="section-desc">Complete tasks to sail through 8 ocean stages. Collect badges, unlock creatures, and build your legend.</p>
+    <div class="stages">
+      <div class="stage-pill">🌊 Tidal Pool</div>
+      <div class="stage-pill">🏖️ Sandy Shore</div>
+      <div class="stage-pill">🌿 Kelp Forest</div>
+      <div class="stage-pill">🪸 Coral Reef</div>
+      <div class="stage-pill">🌊 Open Ocean</div>
+      <div class="stage-pill">⚓ Sunken Ship</div>
+      <div class="stage-pill">🌋 Volcanic Vent</div>
+      <div class="stage-pill">🏝️ Treasure Island</div>
+    </div>
+  </div>
+</section>
+
+<!-- WAVE -->
+<div class="wave-divider" style="background:#006064;">
+  <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="display:block;width:100%;height:60px;">
+    <path d="M0,30 Q360,60 720,30 Q1080,0 1440,30 L1440,60 L0,60 Z" fill="#E0F7FA"/>
+  </svg>
+</div>
+
+<!-- PRICING -->
+<section class="pricing">
+  <div class="section-inner">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title">Start free. Grow when you're ready.</h2>
+    <p class="section-desc">No pressure, no guilt. Kani Do is free to start and Pro when you want more.</p>
+    <div class="pricing-grid">
+
+      <div class="pricing-card">
+        <div class="pricing-tier">Free</div>
+        <div class="pricing-price">$0</div>
+        <div class="pricing-desc">Forever free, no credit card needed</div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span> 5 active tasks</li>
+          <li><span class="check">✓</span> 2 chests (Treasure + Work)</li>
+          <li><span class="check">✓</span> Ocean map + 8 stages</li>
+          <li><span class="check">✓</span> Streak tracking</li>
+          <li><span class="check">✓</span> 3 crew members</li>
+          <li><span class="check">✓</span> 7-day journey stats</li>
+          <li><span class="check">✓</span> iOS Widget + Apple Watch</li>
+        </ul>
+        <a href="https://kani-do.vercel.app" class="pricing-cta secondary">Get started free</a>
+      </div>
+
+      <div class="pricing-card featured">
+        <div class="pricing-badge">Most popular</div>
+        <div class="pricing-tier">Pro</div>
+        <div class="pricing-price">$2.99<span>/mo</span></div>
+        <div class="pricing-desc">For those who want the full ocean</div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span> Unlimited tasks</li>
+          <li><span class="check">✓</span> All 3 chests + 2 custom</li>
+          <li><span class="check">✓</span> All creatures + legendary hats</li>
+          <li><span class="check">✓</span> Unlimited crew</li>
+          <li><span class="check">✓</span> Full analytics history</li>
+          <li><span class="check">✓</span> Calendar view + sync</li>
+          <li><span class="check">✓</span> Everything in Free</li>
+        </ul>
+        <a href="#waitlist" class="pricing-cta primary">Join waitlist →</a>
+      </div>
+
+      <div class="pricing-card">
+        <div class="pricing-tier">Premium</div>
+        <div class="pricing-price">$6.99<span>/mo</span></div>
+        <div class="pricing-desc">For the serious captains</div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span> Everything in Pro</li>
+          <li><span class="check">✓</span> AI task suggestions</li>
+          <li><span class="check">✓</span> Data export (CSV)</li>
+          <li><span class="check">✓</span> Early access to new features</li>
+          <li><span class="check">✓</span> Priority support</li>
+        </ul>
+        <a href="#waitlist" class="pricing-cta gold">Join waitlist →</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- WAVE -->
+<div class="wave-divider" style="background:#E0F7FA;">
+  <svg viewBox="0 0 1440 60" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="display:block;width:100%;height:60px;">
+    <path d="M0,30 Q360,0 720,30 Q1080,60 1440,30 L1440,60 L0,60 Z" fill="#ffffff"/>
+  </svg>
+</div>
+
+<!-- FOUNDER -->
+<section class="founder">
+  <div class="section-inner">
+    <div class="section-label">The captain behind the wheel</div>
+    <h2 class="section-title" style="margin-bottom:32px;">About the founder</h2>
+    <div class="founder-card">
+      <div class="founder-avatar">
+      <svg width="44" height="44" viewBox="0 0 64 64">
+        <line x1="10" y1="36" x2="2" y2="27" stroke="#c0392b" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="54" y1="36" x2="62" y2="27" stroke="#c0392b" stroke-width="3.5" stroke-linecap="round"/>
+        <ellipse cx="7" cy="23" rx="6.5" ry="5" fill="#e74c3c" transform="rotate(-30 7 23)"/>
+        <ellipse cx="57" cy="23" rx="6.5" ry="5" fill="#e74c3c" transform="rotate(30 57 23)"/>
+        <line x1="13" y1="32" x2="6" y2="21" stroke="#c0392b" stroke-width="4.5" stroke-linecap="round"/>
+        <line x1="51" y1="32" x2="58" y2="21" stroke="#c0392b" stroke-width="4.5" stroke-linecap="round"/>
+        <ellipse cx="32" cy="38" rx="22" ry="14" fill="#e74c3c"/>
+        <ellipse cx="32" cy="23" rx="14.5" ry="11.5" fill="#e74c3c"/>
+        <circle cx="25" cy="19" r="5.5" fill="white"/>
+        <circle cx="39" cy="19" r="5.5" fill="white"/>
+        <circle cx="26" cy="20" r="2.8" fill="#1a0800"/>
+        <circle cx="40" cy="20" r="2.8" fill="#1a0800"/>
+        <path d="M 24 29 Q 32 38 40 29" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <line x1="25" y1="12" x2="25" y2="18" stroke="#c0392b" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="39" y1="12" x2="39" y2="18" stroke="#c0392b" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+      <div>
+        <div class="founder-name">Sarineh</div>
+        <div class="founder-role">Founder, Kani Do</div>
+        <p class="founder-bio">Kani Do was built by Sarineh, a builder who knows what it feels like to have 47 tabs open, a to-do list that never ends, and a brain that won't slow down. This is the app she wished existed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOTTOM CTA -->
+<section class="bottom-cta">
+  <div class="section-inner">
+    <h2 class="section-title">Ready to set sail? 🌊</h2>
+    <p class="section-desc">Join the waitlist and be first to know when Kani Do is ready for you.</p>
+    <div style="display:flex;justify-content:center;">
+      <div class="waitlist-form" id="waitlistForm2">
+        <input class="waitlist-input" type="email" placeholder="your@email.com" id="emailInput2"/>
+        <button class="waitlist-btn" onclick="submitWaitlist2()">Join the waitlist 🌊</button>
+      </div>
+      <div class="waitlist-success" id="waitlistSuccess2" style="display:none;">
+        🎉 You're on the list! We'll be in touch soon. Welcome aboard, captain!
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Kani <span>Do</span></div>
+  <p style="margin-bottom:12px;">Navigate your day, one island at a time.</p>
+  <div>
+    <a href="https://kani-do.vercel.app">Try the app</a>
+    <a href="mailto:hello@kanido.co">hello@kanido.co</a>
+  </div>
+  <p style="margin-top:16px;">© 2026 Kani Do. Made with 🦀</p>
+</footer>
+
+<script>
+  // Waitlist form submission
+  async function submitWaitlist() {
+    const email = document.getElementById('emailInput').value.trim();
+    if (!email || !email.includes('@')) {
+      document.getElementById('emailInput').style.borderColor = '#FF8A71';
+      return;
+    }
+    await saveEmail(email);
+    document.getElementById('waitlistForm').style.display = 'none';
+    document.getElementById('waitlistSuccess').style.display = 'block';
+  }
+
+  async function submitWaitlist2() {
+    const email = document.getElementById('emailInput2').value.trim();
+    if (!email || !email.includes('@')) {
+      document.getElementById('emailInput2').style.borderColor = '#FF8A71';
+      return;
+    }
+    await saveEmail(email);
+    document.getElementById('waitlistForm2').style.display = 'none';
+    document.getElementById('waitlistSuccess2').style.display = 'block';
+  }
+
+  async function saveEmail(email) {
+    // Save to Supabase waitlist table
+    try {
+      await fetch('https://jynsqindbhbiuekuefuh.supabase.co/rest/v1/waitlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5bnNxaW5kYmhiaXVla3VlZnVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NjkxNTEsImV4cCI6MjA4ODQ0NTE1MX0.NrkEGqJfkOB3TljqFCT0Pt_jEOKlz1tHdv1BeE6Xe6w',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5bnNxaW5kYmhiaXVla3VlZnVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NjkxNTEsImV4cCI6MjA4ODQ0NTE1MX0.NrkEGqJfkOB3TljqFCT0Pt_jEOKlz1tHdv1BeE6Xe6w',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ email, joined_at: new Date().toISOString() })
+      });
+    } catch(e) {
+      console.log('Waitlist save error:', e);
+    }
+  }
+
+  // Scroll animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.for-you-card, .feature-card, .pricing-card, .stage-pill').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
